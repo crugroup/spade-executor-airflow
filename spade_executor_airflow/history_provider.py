@@ -21,9 +21,9 @@ class AirflowRunHistoryProvider(HistoryProvider):
         """Trigger a DAG to run."""
 
         logger.info(f"Retrieving Airflow runs for DAG ID {process.system_params['dag_id']}")
-        auth_key = base64.b64encode(f"{cls.airflow_username}:{cls.airflow_password}").decode()
+        auth_key = base64.b64encode(f"{cls.airflow_username}:{cls.airflow_password}".encode()).decode()
         resp = requests.get(
-            f"{cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dag_runs",
+            f"{cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dagRuns",
             headers={"Authorization": f"Basic {auth_key}"},
         )
         if resp.status_code != 200:
