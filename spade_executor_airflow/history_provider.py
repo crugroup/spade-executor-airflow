@@ -35,17 +35,20 @@ class AirflowRunHistoryProvider(HistoryProvider):
         data = resp.json()
         ret = []
         for run in data["dag_runs"]:
+            if run["state"] == "success":
+                status = "finished"
+                result = "success"
+            elif run["state"] == "failed":
+                status = "finished"
+                result = "failed"
+            elif run["state"] == "running" or run["state"] == "restarting":
+                status = "running"
+                result = None
             process_run = RunResult(
                 process=process,
                 output=run,
+                status=status,
+                result=result,
             )
-            if run["state"] == "success":
-                process_run.status = "finished"
-                process_run.result = "success"
-            elif run["state"] == "failed":
-                process_run.status = "finished"
-                process_run.result = "failed"
-            elif run["state"] == "running" or run["state"] == "restarting":
-                process_run.status = "running"
             ret.append(process_run)
         return ret
