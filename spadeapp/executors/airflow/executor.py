@@ -3,7 +3,7 @@ import requests
 import base64
 import os
 
-from spadeapp.processes.executor import Executor, RunResult
+from spadesdk.executor import Executor, RunResult
 
 logger = logging.getLogger(__name__)
 

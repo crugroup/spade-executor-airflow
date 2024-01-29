@@ -3,8 +3,8 @@ import requests
 import base64
 import os
 
-from spadeapp.processes.history_provider import HistoryProvider
-from spadeapp.processes.models import Process, ProcessRun
+from spadesdk.history_provider import HistoryProvider
+from spadesdk.executor import Process, RunResult
 
 logger = logging.getLogger(__name__)
 
@@ -33,17 +33,17 @@ class ExampleHistoryProvider(HistoryProvider):
         data = resp.json()
         ret = []
         for run in data["dag_runs"]:
-            process_run = ProcessRun(
+            process_run = RunResult(
                 process=process,
                 output=run,
             )
             if run["state"] == "success":
-                process_run.status = ProcessRun.Statuses.FINISHED
-                process_run.result = ProcessRun.Results.SUCCESS
+                process_run.status = "finished"
+                process_run.result = "success"
             elif run["state"] == "failed":
-                process_run.status = ProcessRun.Statuses.FINISHED
-                process_run.result = ProcessRun.Results.FAILURE
+                process_run.status = "finished"
+                process_run.result = "failed"
             elif run["state"] == "running" or run["state"] == "restarting":
-                process_run.status = ProcessRun.Statuses.RUNNING
+                process_run.status = "running"
             ret.append(process_run)
         return ret
