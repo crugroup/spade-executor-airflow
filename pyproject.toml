@@ -1,0 +1,22 @@
+[project]
+name = "spade-executor-airflow"
+authors = [
+    {name = "Zakariah Nuccio", email = "zak.nuccio@crugroup.com"},
+]
+description = "Airflow Executor for Spade"
+requires-python = ">=3.11"
+version = "0.1.0"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+dependencies = [
+    "spadesdk >= 0.1.0",
+]
+
+[project.urls]
+Source = "https://github.com/crugroup/spade-executor-airflow"
+
+[tool.black]
+line-length = 120
+
+[tool.ruff]
+line-length = 120
