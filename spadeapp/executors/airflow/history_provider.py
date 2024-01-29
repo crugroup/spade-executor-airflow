@@ -9,7 +9,7 @@ from spadesdk.history_provider import HistoryProvider
 logger = logging.getLogger(__name__)
 
 
-class ExampleHistoryProvider(HistoryProvider):
+class AirflowRunHistoryProvider(HistoryProvider):
     @classmethod
     def get_runs(cls, process: Process, request, *args, **kwargs):
         """Trigger a DAG to run."""
