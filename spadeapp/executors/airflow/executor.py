@@ -1,8 +1,8 @@
-import logging
-import requests
 import base64
+import logging
 import os
 
+import requests
 from spadesdk.executor import Executor, RunResult
 
 logger = logging.getLogger(__name__)
@@ -19,14 +19,13 @@ class AirflowRunDAGExecutor(Executor):
         if airflow_url is None or airflow_username is None or airflow_password is None:
             logger.error("Airflow URL, username, or password not set")
             return RunResult(result="failure")
-        
+
         logger.info(f"Running Airflow DAG ID {system_params['dag_id']}")
+        auth_key = base64.b64encode(f"{airflow_username}:{airflow_password}").decode()
         resp = requests.post(
             f"{airflow_url}/api/v1/dags/{system_params['dag_id']}/dag_runs",
             headers={
-                "Authorization": f"Basic {
-                    base64.b64encode(f'{airflow_username}:{airflow_password}').decode()
-                }"
+                "Authorization": f"Basic {auth_key}",
             },
             json={
                 "conf": user_params["conf"],

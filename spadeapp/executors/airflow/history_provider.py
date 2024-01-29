@@ -1,12 +1,13 @@
-import logging
-import requests
 import base64
+import logging
 import os
 
-from spadesdk.history_provider import HistoryProvider
+import requests
 from spadesdk.executor import Process, RunResult
+from spadesdk.history_provider import HistoryProvider
 
 logger = logging.getLogger(__name__)
+
 
 class ExampleHistoryProvider(HistoryProvider):
     @classmethod
@@ -19,13 +20,11 @@ class ExampleHistoryProvider(HistoryProvider):
         if airflow_url is None or airflow_username is None or airflow_password is None:
             logger.error("Airflow URL, username, or password not set")
             return ()
-        
+
         logger.info(f"Retrieving Airflow runs for DAG ID {process.system_params['dag_id']}")
         resp = requests.get(
             f"{airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dag_runs",
-            headers={
-                "Authorization": f"Basic {base64.b64encode(f'{airflow_username}:{airflow_password}')}"
-            },
+            headers={"Authorization": f"Basic {base64.b64encode(f'{airflow_username}:{airflow_password}')}"},
         )
         if resp.status_code != 200:
             logger.error(f"Failed to get DAG runs: {resp.text}")
