@@ -10,21 +10,21 @@ logger = logging.getLogger(__name__)
 
 
 class AirflowRunHistoryProvider(HistoryProvider):
+    airflow_url = os.environ.get("SPADE_AIRFLOW_URL")
+    airflow_username = os.environ.get("SPADE_AIRFLOW_USERNAME")
+    airflow_password = os.environ.get("SPADE_AIRFLOW_PASSWORD")
+    if airflow_url is None or airflow_username is None or airflow_password is None:
+        logger.error("Airflow URL, username, or password not set")
+
     @classmethod
     def get_runs(cls, process: Process, request, *args, **kwargs):
         """Trigger a DAG to run."""
 
-        airflow_url = os.environ.get("SPADE_AIRFLOW_URL")
-        airflow_username = os.environ.get("SPADE_AIRFLOW_USERNAME")
-        airflow_password = os.environ.get("SPADE_AIRFLOW_PASSWORD")
-        if airflow_url is None or airflow_username is None or airflow_password is None:
-            logger.error("Airflow URL, username, or password not set")
-            return ()
-
         logger.info(f"Retrieving Airflow runs for DAG ID {process.system_params['dag_id']}")
+        auth_key = base64.b64encode(f"{cls.airflow_username}:{cls.airflow_password}").decode()
         resp = requests.get(
-            f"{airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dag_runs",
-            headers={"Authorization": f"Basic {base64.b64encode(f'{airflow_username}:{airflow_password}')}"},
+            f"{cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dag_runs",
+            headers={"Authorization": f"Basic {auth_key}"},
         )
         if resp.status_code != 200:
             logger.error(f"Failed to get DAG runs: {resp.text}")
