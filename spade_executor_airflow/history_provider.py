@@ -1,6 +1,7 @@
 import base64
 import logging
 import os
+from datetime import datetime
 
 import requests
 from spadesdk.executor import Process, RunResult
@@ -25,7 +26,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
         logger.info(f"Retrieving Airflow runs for DAG ID {process.system_params['dag_id']}")
         auth_key = base64.b64encode(f"{cls.airflow_username}:{cls.airflow_password}".encode()).decode()
         resp = requests.get(
-            f"{cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dagRuns",
+            f"{cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dagRuns?order_by=-execution_date",
             headers={"Authorization": f"Basic {auth_key}"},
             verify=cls.airflow_verify_ssl,
         )
@@ -35,20 +36,28 @@ class AirflowRunHistoryProvider(HistoryProvider):
         data = resp.json()
         ret = []
         for run in data["dag_runs"]:
+            status = RunResult.Status.NEW
+            result = None
             if run["state"] == "success":
-                status = "finished"
-                result = "success"
+                status = RunResult.Status.FINISHED
+                result = RunResult.Result.SUCCESS
             elif run["state"] == "failed":
-                status = "finished"
-                result = "failed"
+                status = RunResult.Status.FINISHED
+                result = RunResult.Result.FAILED
             elif run["state"] == "running" or run["state"] == "restarting":
-                status = "running"
+                status = RunResult.Status.RUNNING
                 result = None
             process_run = RunResult(
                 process=process,
                 output=run,
                 status=status,
                 result=result,
+                created_at=(
+                    datetime.strptime(run.get("start_date"), "%Y-%m-%dT%H:%M:%S.%f%z")
+                    if run.get("start_date")
+                    else None
+                ),
+                user_id=run["conf"].get("spade__user_id"),
             )
             ret.append(process_run)
         return ret
