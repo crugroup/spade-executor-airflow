@@ -35,6 +35,6 @@ class AirflowRunDAGExecutor(Executor):
         )
         if resp.status_code != 200:
             logger.error(f"Failed to run DAG: {resp.text}")
-            return RunResult(process=process, status="error")
+            return RunResult(process=process, status="failed")
 
         return RunResult(process=process, status="running")
