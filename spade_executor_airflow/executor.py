@@ -25,6 +25,8 @@ class AirflowRunDAGExecutor(Executor):
         auth_key = base64.b64encode(f"{cls.airflow_username}:{cls.airflow_password}".encode()).decode()
         params = user_params or {}
         params["spade__user_id"] = user_id
+        logger.info(f"Sending request to {cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dagRuns")
+        logger.info(f"Params: {params}")
         resp = requests.post(
             f"{cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dagRuns",
             headers={
