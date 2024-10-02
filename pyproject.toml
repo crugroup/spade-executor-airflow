@@ -5,12 +5,12 @@ authors = [
 ]
 description = "Airflow Executor for Spade"
 requires-python = ">=3.11"
-version = "0.2.0"
+version = "0.3.0"
 readme = "README.md"
 license = { file = "LICENSE.txt" }
 dependencies = [
     "requests >= 2.31",
-    "spadesdk >= 0.2.0",
+    "spadesdk >= 0.3.0",
 ]
 
 [project.urls]
