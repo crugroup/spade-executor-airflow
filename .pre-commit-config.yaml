@@ -2,8 +2,12 @@ default_stages: [commit]
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v5.0.0
     hooks:
+      - id: no-commit-to-branch
+        name: "do not commit to main or release"
+        fail_fast: true
+        args: ['--branch', 'main', '--branch', 'release']
       - id: check-merge-conflict
       - id: trailing-whitespace
       - id: end-of-file-fixer
