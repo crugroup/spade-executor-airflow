@@ -15,20 +15,25 @@ class AirflowRunDAGExecutor(Executor):
     airflow_verify_ssl = os.environ.get("SPADE_AIRFLOW_VERIFY_SSL", "true").lower() == "true"
 
     @classmethod
-    def run(cls, process, user_params, user_id) -> RunResult:
+    def run(cls, process, user_params, user, *args, **kwargs) -> RunResult:
         """Trigger a DAG to run."""
 
         if cls.airflow_url is None or cls.airflow_username is None or cls.airflow_password is None:
             raise ValueError("Airflow URL, username, or password not set")
 
-        logger.info(f"Running Airflow DAG ID {process.system_params['dag_id']}")
+        dag_id = user_params.pop("dag_id", None) or process.system_params.get("dag_id")
+        if not dag_id:
+            return RunResult(process=process, status=RunResult.Status.FAILED, error_message="No DAG ID provided")
+
+        logger.info(f"Running Airflow DAG ID {dag_id}")
         auth_key = base64.b64encode(f"{cls.airflow_username}:{cls.airflow_password}".encode()).decode()
         params = user_params or {}
-        params["spade__user_id"] = user_id
-        logger.info(f"Sending request to {cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dagRuns")
+        params["spade__user_id"] = user.id
+        params["spade__user_email"] = user.email
+        logger.info(f"Sending request to {cls.airflow_url}/api/v1/dags/{dag_id}/dagRuns")
         logger.info(f"Params: {params}")
         resp = requests.post(
-            f"{cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dagRuns",
+            f"{cls.airflow_url}/api/v1/dags/{dag_id}/dagRuns",
             headers={
                 "Authorization": f"Basic {auth_key}",
             },
