@@ -9,10 +9,10 @@ def request_airflow_token(
 ) -> str:
     """Request an Airflow token using the API login endpoint."""
     resp = requests.post(
-        f"{airflow_url}/auth/api_login",
+        f"{airflow_url}/auth/token",
         json={
             "username": airflow_username,
-            "api_key": airflow_password,
+            "password": airflow_password,
         },
         verify=verify_ssl,
     )
