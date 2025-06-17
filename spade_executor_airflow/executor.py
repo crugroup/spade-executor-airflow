@@ -1,9 +1,10 @@
-import base64
 import logging
 import os
 
 import requests
 from spadesdk.executor import Executor, RunResult
+
+from . import utils
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,12 @@ class AirflowRunDAGExecutor(Executor):
             return RunResult(process=process, status=RunResult.Status.FAILED, error_message="No DAG ID provided")
 
         logger.info(f"Running Airflow DAG ID {dag_id}")
-        auth_key = base64.b64encode(f"{cls.airflow_username}:{cls.airflow_password}".encode()).decode()
+        token = utils.request_airflow_token(
+            cls.airflow_url,
+            cls.airflow_username,
+            cls.airflow_password,
+            verify_ssl=cls.airflow_verify_ssl,
+        )
         params = user_params or {}
         params["spade__user_id"] = user.id
         params["spade__user_email"] = user.email
@@ -35,7 +41,7 @@ class AirflowRunDAGExecutor(Executor):
         resp = requests.post(
             f"{cls.airflow_url}/api/v1/dags/{dag_id}/dagRuns",
             headers={
-                "Authorization": f"Basic {auth_key}",
+                "Authorization": f"Bearer {token}",
             },
             json={
                 "conf": params,
