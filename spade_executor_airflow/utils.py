@@ -15,10 +15,11 @@ def request_airflow_token(
             "password": airflow_password,
         },
         verify=verify_ssl,
+        allow_redirects=False,
     )
-    if resp.status_code != 200:
+    if resp.status_code > 400:
         raise ValueError(f"Failed to get Airflow token: {resp.text}")
-    token = resp.cookies.get("token")
+    token = resp.cookies.get("_token")
     if not token:
         raise ValueError("Failed to get Airflow token: No token in response")
     return token
