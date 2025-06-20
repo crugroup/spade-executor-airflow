@@ -39,7 +39,7 @@ class AirflowRunDAGExecutor(Executor):
         logger.info(f"Sending request to {cls.airflow_url}/api/v1/dags/{dag_id}/dagRuns")
         logger.info(f"Params: {params}")
         resp = requests.post(
-            f"{cls.airflow_url}/api/v1/dags/{dag_id}/dagRuns",
+            f"{cls.airflow_url}/api/v2/dags/{dag_id}/dagRuns",
             headers={
                 "Authorization": f"Bearer {token}",
             },

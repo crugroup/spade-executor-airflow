@@ -32,7 +32,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
             verify_ssl=cls.airflow_verify_ssl,
         )
         resp = requests.get(
-            f"{cls.airflow_url}/api/v1/dags/{process.system_params['dag_id']}/dagRuns?order_by=-execution_date",
+            f"{cls.airflow_url}/api/v2/dags/{process.system_params['dag_id']}/dagRuns?order_by=-execution_date",
             headers={"Authorization": f"Bearer {token}"},
             verify=cls.airflow_verify_ssl,
         )
