@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 from spadesdk.executor import Executor, RunResult
@@ -46,7 +46,7 @@ class AirflowRunDAGExecutor(Executor):
             },
             json={
                 "conf": params,
-                "logical_date": datetime.now().isoformat(),
+                "logical_date": datetime.now(timezone.utc).isoformat(),
             },
             verify=cls.airflow_verify_ssl,
         )
