@@ -23,6 +23,9 @@ class AirflowRunDAGExecutor(Executor):
         if cls.airflow_url is None or cls.airflow_username is None or cls.airflow_password is None:
             raise ValueError("Airflow URL, username, or password not set")
 
+        if not user_params.get("confirmation", True):
+            return RunResult(process=process, status=RunResult.Status.FAILED, error_message="User confirmation missing")
+
         dag_id = user_params.pop("dag_id", None) or process.system_params.get("dag_id")
         if not dag_id:
             return RunResult(process=process, status=RunResult.Status.FAILED, error_message="No DAG ID provided")
