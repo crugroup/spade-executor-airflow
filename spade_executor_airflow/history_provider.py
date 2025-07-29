@@ -75,5 +75,5 @@ class AirflowRunHistoryProvider(HistoryProvider):
                     user_id=run["conf"].get("spade__user_id"),
                 )
                 ret.append(process_run)
-                ret.sort(key=lambda r: r.created_at, reverse=True)
+            ret.sort(key=lambda r: r.created_at, reverse=True)
         return ret
