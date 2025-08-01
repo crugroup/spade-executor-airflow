@@ -21,14 +21,25 @@ class AirflowRunHistoryProvider(HistoryProvider):
     def get_runs(cls, process: Process, request, *args, **kwargs):
         """Trigger a DAG to run."""
 
-        if cls.airflow_url is None or cls.airflow_username is None or cls.airflow_password is None:
-            raise ValueError("Airflow URL, username, or password not set")
+        system_params = process.system_params
+
+        if "airflow_base_url" not in system_params:
+            raise ValueError("Airflow base URL missing from system params")
+        if "airflow_username" not in system_params:
+            raise ValueError("Airflow username missing from system params")
+        if "airflow_password" not in system_params:
+            raise ValueError("Airflow password missing from system params")
+
+        airflow_base_url = system_params["airflow_base_url"]
+        airflow_username = system_params["airflow_username"]
+        airflow_password = system_params["airflow_password"]
+        airflow_verify_ssl = system_params.get("airflow_verify_ssl", "true") == "true"
 
         token = utils.request_airflow_token(
-            cls.airflow_url,
-            cls.airflow_username,
-            cls.airflow_password,
-            verify_ssl=cls.airflow_verify_ssl,
+            airflow_base_url,
+            airflow_username,
+            airflow_password,
+            verify_ssl=airflow_verify_ssl,
         )
 
         dag_ids = []
