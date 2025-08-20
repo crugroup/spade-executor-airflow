@@ -40,6 +40,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
             airflow_username,
             airflow_password,
             verify_ssl=airflow_verify_ssl,
+        )
 
         dag_ids = []
         if "dag_ids" in process.system_params:
