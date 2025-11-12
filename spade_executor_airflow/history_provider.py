@@ -22,6 +22,10 @@ class AirflowRunHistoryProvider(HistoryProvider):
         """Trigger a DAG to run."""
 
         system_params = process.system_params
+        user_params = process.user_params
+
+        if not system_params:
+            raise ValueError("Process system_params is not available")
 
         if "airflow_base_url" not in system_params:
             raise ValueError("Airflow base URL missing from system params")
@@ -42,49 +46,51 @@ class AirflowRunHistoryProvider(HistoryProvider):
             verify_ssl=airflow_verify_ssl,
         )
 
-        dag_ids = []
-        if "dag_ids" in process.system_params:
-            dag_ids = process.system_params["dag_ids"]
-        elif "dag_id" in process.system_params:
-            dag_ids = [process.system_params["dag_id"]]
+        # Get dag_id from user_params (from form selection) or fall back to system_params
+        dag_id = None
+        if user_params and "dag_id" in user_params:
+            dag_id = user_params["dag_id"]
+        elif system_params and "dag_id" in system_params:
+            dag_id = system_params["dag_id"]
+        
+        if not dag_id:
+            raise ValueError("No DAG ID found in user_params or system_params")
 
-        for dag_id in dag_ids:
-            logger.info(f"Retrieving Airflow runs for DAG ID {dag_id}")
-
-            resp = requests.get(
-                f"{cls.airflow_url}/api/v2/dags/{dag_id}/dagRuns?order_by=-logical_date",
-                headers={"Authorization": f"Bearer {token}"},
-                verify=cls.airflow_verify_ssl,
-            )
-            if resp.status_code != 200:
-                logger.error(f"Failed to get DAG runs: {resp.text}")
-                return ()
-            data = resp.json()
-            ret = []
-            for run in data["dag_runs"]:
-                status = RunResult.Status.NEW
+        resp = requests.get(
+            f"{cls.airflow_url}/api/v2/dags/{dag_id}/dagRuns?order_by=-logical_date",
+            headers={"Authorization": f"Bearer {token}"},
+            verify=cls.airflow_verify_ssl,
+        )
+        if resp.status_code != 200:
+            logger.error(f"Failed to get DAG runs: {resp.text}")
+            return []
+        
+        data = resp.json()
+        ret = []
+        for run in data["dag_runs"]:
+            status = RunResult.Status.NEW
+            result = None
+            if run["state"] == "success":
+                status = RunResult.Status.FINISHED
+                result = RunResult.Result.SUCCESS
+            elif run["state"] == "failed":
+                status = RunResult.Status.FINISHED
+                result = RunResult.Result.FAILED
+            elif run["state"] == "running" or run["state"] == "restarting":
+                status = RunResult.Status.RUNNING
                 result = None
-                if run["state"] == "success":
-                    status = RunResult.Status.FINISHED
-                    result = RunResult.Result.SUCCESS
-                elif run["state"] == "failed":
-                    status = RunResult.Status.FINISHED
-                    result = RunResult.Result.FAILED
-                elif run["state"] == "running" or run["state"] == "restarting":
-                    status = RunResult.Status.RUNNING
-                    result = None
-                process_run = RunResult(
-                    process=process,
-                    output=run,
-                    status=status,
-                    result=result,
-                    created_at=(
-                        datetime.strptime(run.get("start_date"), "%Y-%m-%dT%H:%M:%S.%f%z")
-                        if run.get("start_date")
-                        else None
-                    ),
-                    user_id=run["conf"].get("spade__user_id"),
-                )
-                ret.append(process_run)
+            process_run = RunResult(
+                process=process,
+                output=run,
+                status=status,
+                result=result,
+                created_at=(
+                    datetime.strptime(run.get("start_date"), "%Y-%m-%dT%H:%M:%S.%f%z")
+                    if run.get("start_date")
+                    else None
+                ),
+                user_id=run["conf"].get("spade__user_id"),
+            )
+            ret.append(process_run)
         ret.sort(key=lambda r: r.created_at, reverse=True)
         return ret
