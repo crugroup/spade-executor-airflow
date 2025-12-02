@@ -48,6 +48,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
         elif "dag_id" in process.system_params:
             dag_ids = [process.system_params["dag_id"]]
 
+        ret = []
         for dag_id in dag_ids:
             logger.info(f"Retrieving Airflow runs for DAG ID {dag_id}")
 
@@ -60,7 +61,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
                 logger.error(f"Failed to get DAG runs: {resp.text}")
                 return ()
             data = resp.json()
-            ret = []
+
             for run in data["dag_runs"]:
                 status = RunResult.Status.NEW
                 result = None
