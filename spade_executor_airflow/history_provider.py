@@ -1,6 +1,6 @@
 import logging
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 
 import requests
 from spadesdk.executor import Process, RunResult
@@ -87,5 +87,8 @@ class AirflowRunHistoryProvider(HistoryProvider):
                     user_id=run["conf"].get("spade__user_id"),
                 )
                 ret.append(process_run)
-        ret.sort(key=lambda r: r.created_at or datetime.min.replace(tzinfo=None), reverse=True)
+        ret.sort(
+            key=lambda r: r.created_at if r.created_at is not None else datetime.min.replace(tzinfo=timezone.utc),
+            reverse=True,
+        )
         return ret
