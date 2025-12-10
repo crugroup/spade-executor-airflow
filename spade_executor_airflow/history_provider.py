@@ -87,5 +87,8 @@ class AirflowRunHistoryProvider(HistoryProvider):
                     user_id=run["conf"].get("spade__user_id"),
                 )
                 ret.append(process_run)
-        ret.sort(key=lambda r: r.created_at if r.created_at is not None else datetime.min.replace(tzinfo=timezone.utc), reverse=True)
+        ret.sort(
+            key=lambda r: r.created_at if r.created_at is not None else datetime.min.replace(tzinfo=timezone.utc),
+            reverse=True,
+        )
         return ret
