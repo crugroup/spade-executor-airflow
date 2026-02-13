@@ -1,5 +1,4 @@
 import logging
-import os
 from datetime import datetime, timezone
 
 import requests
@@ -12,11 +11,6 @@ logger = logging.getLogger(__name__)
 
 
 class AirflowRunHistoryProvider(HistoryProvider):
-    airflow_url = os.environ.get("SPADE_AIRFLOW_URL")
-    airflow_username = os.environ.get("SPADE_AIRFLOW_USERNAME")
-    airflow_password = os.environ.get("SPADE_AIRFLOW_PASSWORD")
-    airflow_verify_ssl = os.environ.get("SPADE_AIRFLOW_VERIFY_SSL", "true").lower() == "true"
-
     @classmethod
     def get_runs(cls, process: Process, request, *args, **kwargs):
         """Trigger a DAG to run."""
