@@ -47,9 +47,9 @@ class AirflowRunHistoryProvider(HistoryProvider):
             logger.info(f"Retrieving Airflow runs for DAG ID {dag_id}")
 
             resp = requests.get(
-                f"{cls.airflow_url}/api/v2/dags/{dag_id}/dagRuns?order_by=-logical_date",
+                f"{airflow_base_url}/api/v2/dags/{dag_id}/dagRuns?order_by=-logical_date",
                 headers={"Authorization": f"Bearer {token}"},
-                verify=cls.airflow_verify_ssl,
+                verify=airflow_verify_ssl,
             )
             if resp.status_code != 200:
                 logger.error(f"Failed to get DAG runs: {resp.text}")
