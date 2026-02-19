@@ -1,7 +1,6 @@
 import logging
 from datetime import datetime, timezone
 
-import requests
 from spadesdk.executor import Process, RunResult
 from spadesdk.history_provider import HistoryProvider
 
@@ -46,17 +45,14 @@ class AirflowRunHistoryProvider(HistoryProvider):
         for dag_id in dag_ids:
             logger.info(f"Retrieving Airflow runs for DAG ID {dag_id}")
 
-            resp = requests.get(
-                f"{airflow_base_url}/api/v2/dags/{dag_id}/dagRuns?order_by=-logical_date",
-                headers={"Authorization": f"Bearer {token}"},
-                verify=airflow_verify_ssl,
+            runs = utils.get_dag_runs(
+                airflow_base_url,
+                token,
+                dag_id,
+                verify_ssl=airflow_verify_ssl,
             )
-            if resp.status_code != 200:
-                logger.error(f"Failed to get DAG runs: {resp.text}")
-                return ()
-            data = resp.json()
 
-            for run in data["dag_runs"]:
+            for run in runs:
                 status = RunResult.Status.NEW
                 result = None
                 if run["state"] == "success":
@@ -65,7 +61,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
                 elif run["state"] == "failed":
                     status = RunResult.Status.FINISHED
                     result = RunResult.Result.FAILED
-                elif run["state"] == "running" or run["state"] == "restarting":
+                elif run["state"] in ("running", "restarting"):
                     status = RunResult.Status.RUNNING
                     result = None
                 process_run = RunResult(
