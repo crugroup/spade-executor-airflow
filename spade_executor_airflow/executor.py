@@ -27,7 +27,7 @@ class AirflowRunDAGExecutor(Executor):
         airflow_username = system_params["airflow_username"]
         airflow_password = system_params["airflow_password"]
         airflow_verify_ssl = system_params.get("airflow_verify_ssl", "true") == "true"
-        airflow_allow_multiple_runs = system_params.get("airflow_allow_multiple_runs", "false") == "true"
+        airflow_allow_multiple_runs = system_params.get("allow_multiple_runs", "false") == "true"
 
         if not user_params.pop("confirmation", True):
             return RunResult(process=process, status=RunResult.Status.FAILED, error_message="User confirmation missing")
