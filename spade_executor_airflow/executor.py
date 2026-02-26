@@ -48,7 +48,7 @@ class AirflowRunDAGExecutor(Executor):
             runs = utils.get_dag_runs(airflow_base_url, token, dag_id, limit=1, verify_ssl=airflow_verify_ssl)
             if len(runs) > 0 and runs[0]["state"] in ("running", "restarting"):
                 return RunResult(
-                    process=process, status=RunResult.Status.FAILED, error_message="DAG is already running"
+                    process=process, status=RunResult.Status.FAILED, error_message="Process is already running"
                 )
 
         logger.info(f"Running Airflow DAG {dag_id}")
