@@ -68,11 +68,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
                 # Use start_date for created_at; fall back to logical_date (always present)
                 # so freshly triggered runs sort correctly even before they start.
                 sort_date_str = run.get("start_date") or run.get("logical_date")
-                created_at = (
-                    datetime.strptime(sort_date_str, "%Y-%m-%dT%H:%M:%S.%f%z")
-                    if sort_date_str
-                    else None
-                )
+                created_at = datetime.strptime(sort_date_str, "%Y-%m-%dT%H:%M:%S.%f%z") if sort_date_str else None
 
                 process_run = RunResult(
                     process=process,
