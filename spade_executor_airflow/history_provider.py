@@ -64,17 +64,19 @@ class AirflowRunHistoryProvider(HistoryProvider):
                 elif run["state"] in ("running", "restarting"):
                     status = RunResult.Status.RUNNING
                     result = None
+
+                # Use start_date for created_at; fall back to logical_date (always present)
+                # so freshly triggered runs sort correctly even before they start.
+                sort_date_str = run.get("start_date") or run.get("logical_date")
+                created_at = datetime.strptime(sort_date_str, "%Y-%m-%dT%H:%M:%S.%f%z") if sort_date_str else None
+
                 process_run = RunResult(
                     process=process,
                     output=run,
                     status=status,
                     result=result,
-                    created_at=(
-                        datetime.strptime(run.get("start_date"), "%Y-%m-%dT%H:%M:%S.%f%z")
-                        if run.get("start_date")
-                        else None
-                    ),
-                    user_id=run["conf"].get("spade__user_id"),
+                    created_at=created_at,
+                    user_id=(run.get("conf") or {}).get("spade__user_id"),
                 )
                 ret.append(process_run)
         ret.sort(

@@ -23,10 +23,21 @@ def request_airflow_token(
     )
     if resp.status_code > 400:
         raise ValueError(f"Failed to get Airflow token: {resp.text}")
+
+    # Primary: extract token from JSON response {"access_token": "..."}
+    try:
+        token = resp.json().get("access_token")
+        if token:
+            return token
+    except ValueError:
+        pass
+
+    # Legacy fallback: extract token from cookies (to be removed)
     token = resp.cookies.get("_token")
-    if not token:
-        raise ValueError("Failed to get Airflow token: No token in response")
-    return token
+    if token:
+        return token
+
+    raise ValueError("Failed to get Airflow token: No token in response")
 
 
 def get_dag_runs(
