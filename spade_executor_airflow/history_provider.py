@@ -26,7 +26,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
         airflow_base_url = system_params["airflow_base_url"]
         airflow_username = system_params["airflow_username"]
         airflow_password = system_params["airflow_password"]
-        airflow_verify_ssl = system_params.get("airflow_verify_ssl", "true") == "true"
+        airflow_verify_ssl = system_params.get("airflow_verify_ssl", "true").lower() == "true"
 
         token = utils.request_airflow_token(
             airflow_base_url,
@@ -55,12 +55,20 @@ class AirflowRunHistoryProvider(HistoryProvider):
             for run in runs:
                 status = RunResult.Status.NEW
                 result = None
+                error_message = None
                 if run["state"] == "success":
                     status = RunResult.Status.FINISHED
                     result = RunResult.Result.SUCCESS
                 elif run["state"] == "failed":
                     status = RunResult.Status.FINISHED
                     result = RunResult.Result.FAILED
+                    error_message = utils.get_run_errors(
+                        airflow_base_url,
+                        token,
+                        dag_id,
+                        run["dag_run_id"],
+                        verify_ssl=airflow_verify_ssl,
+                    )
                 elif run["state"] in ("running", "restarting"):
                     status = RunResult.Status.RUNNING
                     result = None
@@ -76,6 +84,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
                     status=status,
                     result=result,
                     created_at=created_at,
+                    error_message=error_message,
                     user_id=(run.get("conf") or {}).get("spade__user_id"),
                 )
                 ret.append(process_run)
