@@ -52,3 +52,24 @@ def get_dag_runs(
         logger.error(f"Failed to get DAG runs: {resp.text}")
         return []
     return resp.json()["dag_runs"]
+
+
+def get_run_errors(
+    base_url: str,
+    token: str,
+    dag_id: str,
+    dag_run_id: str,
+    verify_ssl: bool = True,
+) -> str:
+    request_url = f"{base_url}/api/v2/dags/{dag_id}/dagRuns/{dag_run_id}/taskInstances?state=failed"
+    resp = requests.get(
+        request_url,
+        headers={"Authorization": f"Bearer {token}"},
+        verify=verify_ssl,
+    )
+    if resp.status_code != 200:
+        logger.error(f"Failed to get DAG run errors: {resp.text}")
+        return ""
+    task_instances = resp.json()["task_instances"]
+    failed_tasks = [task["task_id"] for task in task_instances]
+    return "Failed tasks: " + ", ".join(failed_tasks) if failed_tasks else "No failed tasks"
