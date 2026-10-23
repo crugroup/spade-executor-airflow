@@ -9,7 +9,7 @@ version = "0.4.0"
 readme = "README.md"
 license = { file = "LICENSE.txt" }
 dependencies = [
-    "requests >= 2.31",
+    "requests >= 2.33.0",
     "spadesdk >= 0.5.0",
 ]
 
