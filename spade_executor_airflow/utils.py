@@ -1,11 +1,63 @@
+import base64
+import hashlib
+import json
 import logging
+import threading
+import time
 
 import requests
 
 logger = logging.getLogger(__name__)
 
+# A dashboard load asks for the history of every provider-backed process, and each
+# process used to log in to Airflow separately. Reuse a token per credentials until
+# shortly before it expires, which removes that login burst.
+_DEFAULT_TOKEN_TTL = 300
+_MAX_TOKEN_TTL = 900
+_token_cache: dict[tuple[str, str, str, bool], tuple[str, float]] = {}
+_token_cache_lock = threading.Lock()
+
+
+def _token_cache_key(base_url: str, username: str, password: str, verify_ssl: bool) -> tuple[str, str, str, bool]:
+    return (base_url, username, hashlib.sha256(password.encode()).hexdigest(), verify_ssl)
+
+
+def _token_ttl(token: str) -> float:
+    """Return how long a token can be reused, preferring its JWT expiry.
+
+    The cap keeps a revoked token from being reused for the whole of a long expiry.
+    """
+    try:
+        payload = token.split(".")[1]
+        payload += "=" * (-len(payload) % 4)
+        claims = json.loads(base64.urlsafe_b64decode(payload.encode()))
+        expires_in = float(claims["exp"]) - time.time() - 60
+    except (IndexError, KeyError, TypeError, ValueError):
+        return _DEFAULT_TOKEN_TTL
+    return max(0.0, min(expires_in, _MAX_TOKEN_TTL))
+
 
 def request_airflow_token(
+    base_url: str,
+    username: str,
+    password: str,
+    verify_ssl: bool = True,
+) -> str:
+    """Return an Airflow token, reusing a cached one while it is still valid."""
+    key = _token_cache_key(base_url, username, password, verify_ssl)
+    now = time.monotonic()
+    with _token_cache_lock:
+        cached = _token_cache.get(key)
+        if cached is not None and cached[1] > now:
+            return cached[0]
+
+        # Hold the lock while logging in so concurrent callers share a single request.
+        token = _fetch_airflow_token(base_url, username, password, verify_ssl)
+        _token_cache[key] = (token, now + _token_ttl(token))
+        return token
+
+
+def _fetch_airflow_token(
     base_url: str,
     username: str,
     password: str,
