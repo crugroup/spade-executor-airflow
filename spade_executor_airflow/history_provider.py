@@ -12,8 +12,12 @@ logger = logging.getLogger(__name__)
 class AirflowRunHistoryProvider(HistoryProvider):
     @classmethod
     def get_runs(cls, process: Process, request, *args, **kwargs):
-        """Trigger a DAG to run."""
+        """Return the process's runs, newest first."""
 
+        # Callers that only need the current status pass ``latest_only`` so each DAG
+        # returns a single run instead of its full history (and one login per run for
+        # failed ones, via the error lookup below).
+        latest_only = bool(kwargs.get("latest_only", False))
         system_params = process.system_params
 
         if "airflow_base_url" not in system_params:
@@ -50,6 +54,7 @@ class AirflowRunHistoryProvider(HistoryProvider):
                 token,
                 dag_id,
                 verify_ssl=airflow_verify_ssl,
+                limit=1 if latest_only else None,
             )
 
             for run in runs:
